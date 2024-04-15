@@ -34,7 +34,7 @@ class Record:
         for p in self.phones:
             if p.value == phone:
                 self.phones.remove(p)
-            return
+                return
         raise ValueError("Phone number not found.")
 
     def __init__(self, name):
@@ -104,18 +104,23 @@ def parse_input(user_input):
 def add_contact(args, book):
     if len(args) == 2:
         name, phone = args
-        record = Record(name)
-        record.add_phone(phone)
-        book.add_record(record)
-        return "Contact added."
-
-@input_error
-def change_contact(args, book):
-    if len(args) == 2:
-        name, phone = args
         record = book.find(name)
         if record:
             record.add_phone(phone)
+            return "Phone added to existing contact."
+        else:
+            record = Record(name)
+            record.add_phone(phone)
+            book.add_record(record)
+            return "New contact added."
+
+@input_error
+def change_contact(args, book):
+    if len(args) == 3:
+        name, old_phone, new_phone = args
+        record = book.find(name)
+        if record:
+            record.edit_phone(old_phone, new_phone)
             return "Contact updated."
         else:
             return "Contact not found."
@@ -159,7 +164,14 @@ def show_birthday(args, book):
 @input_error
 def birthdays(args, book):
     today = datetime.today()
-    next_week = today + timedelta(days=7)
+    
+    if today.weekday() == 5:
+        today += timedelta(days=2)
+    elif today.weekday() == 6:
+        today += timedelta(days=1)
+    
+    next_week_monday = today + timedelta(days=(0 - today.weekday() + 7) % 7)
+    next_week = next_week_monday + timedelta(days=7)
     upcoming_birthdays = []
 
     for record in book.data.values():
@@ -174,7 +186,7 @@ def birthdays(args, book):
         return "\n".join(upcoming_birthdays)
     else:
         return "No upcoming birthdays in the next week."
-
+    
 def main():
     book = AddressBook()
 
