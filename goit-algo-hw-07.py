@@ -164,14 +164,15 @@ def show_birthday(args, book):
 @input_error
 def birthdays(args, book):
     today = datetime.today()
-    
+    period_start = today
+    period_end = today + timedelta(days=7)
+
     if today.weekday() == 5:
-        today += timedelta(days=2)
+        period_start += timedelta(days=2)
+        period_end += timedelta(days=2)
     elif today.weekday() == 6:
-        today += timedelta(days=1)
-    
-    next_week_monday = today + timedelta(days=(0 - today.weekday() + 7) % 7)
-    next_week = next_week_monday + timedelta(days=7)
+        period_start += timedelta(days=1)
+        period_end += timedelta(days=1)
     upcoming_birthdays = []
 
     for record in book.data.values():
@@ -179,7 +180,7 @@ def birthdays(args, book):
             birthday_date = record.birthday.value.replace(year=today.year)
             if birthday_date < today:
                 birthday_date = birthday_date.replace(year=today.year + 1)
-            if today <= birthday_date <= next_week:
+            if period_start <= birthday_date <= period_end:
                 upcoming_birthdays.append(f"{record.name.value}: {birthday_date.strftime('%d.%m')}")
 
     if upcoming_birthdays:
