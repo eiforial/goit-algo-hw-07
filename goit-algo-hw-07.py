@@ -100,6 +100,25 @@ def parse_input(user_input):
     cmd = cmd.strip().lower()
     return cmd, args
 
+def get_upcoming_birthdays(book):
+    today = datetime.today().date()
+    upcoming_birthdays = []
+
+    for record in book.data.values():
+        if record.birthday:
+            birthday = record.birthday.value.date()
+            birthday_this_year = birthday.replace(year=today.year)
+            if birthday_this_year < today:
+                birthday_this_year = birthday_this_year.replace(year=today.year + 1)
+            days_until_birthday = (birthday_this_year - today).days
+            if days_until_birthday <= 7:
+                congratulation_date = birthday_this_year
+                if congratulation_date.weekday() >= 5:
+                    congratulation_date += timedelta(days=(7 - congratulation_date.weekday()))
+                upcoming_birthdays.append({"name": record.name.value, "congratulation_date": congratulation_date.strftime("%d.%m.%Y")})
+
+    return upcoming_birthdays
+
 @input_error
 def add_contact(args, book):
     if len(args) == 2:
@@ -163,31 +182,12 @@ def show_birthday(args, book):
 
 @input_error
 def birthdays(args, book):
-    today = datetime.today()
-    period_start = today
-    period_end = today + timedelta(days=7)
-
-    if today.weekday() == 5:
-        period_start += timedelta(days=2)
-        period_end += timedelta(days=2)
-    elif today.weekday() == 6:
-        period_start += timedelta(days=1)
-        period_end += timedelta(days=1)
-    upcoming_birthdays = []
-
-    for record in book.data.values():
-        if record.birthday:
-            birthday_date = record.birthday.value.replace(year=today.year)
-            if birthday_date < today:
-                birthday_date = birthday_date.replace(year=today.year + 1)
-            if period_start <= birthday_date <= period_end:
-                upcoming_birthdays.append(f"{record.name.value}: {birthday_date.strftime('%d.%m')}")
-
+    upcoming_birthdays = get_upcoming_birthdays(book)
     if upcoming_birthdays:
-        return "\n".join(upcoming_birthdays)
+        return "\n".join([f"{b['name']}: {b['congratulation_date']}" for b in upcoming_birthdays])
     else:
         return "No upcoming birthdays in the next week."
-    
+
 def main():
     book = AddressBook()
 
